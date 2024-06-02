@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Уменьшение изображения до размеров 800x800
+    // Resize to 800x800
     cv::resize(src, src, cv::Size(800, 800));
 
     // Создаем окна
