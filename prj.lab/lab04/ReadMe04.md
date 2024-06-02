@@ -17,6 +17,11 @@
 	Изначальная картинка для детектирования кругов:
  ![Img](/prj.lab/lab04/img.png)
 
+	Далее накладываем на картинку размытие с помощью функции: cv::GaussianBlur(img, BlurPic, cv::Size(Ks, Ks), blur);
+ затем накладываем шум с помощью функции cv::Mat addNoise(const cv::Mat& orig_im, double noise_sigm). Полученная картинка будет подвережена обработке:
+
+ ![FinalyPic](/prj.lab/lab04/ReallyPic.png)
+
 
 	Размеченная картинка с исходными кругами
 	 
