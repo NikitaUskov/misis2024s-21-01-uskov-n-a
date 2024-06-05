@@ -17,8 +17,8 @@
 	Изначальная картинка для детектирования кругов:
  ![Img](/prj.lab/lab04/img.png)
 
-	Далее накладываем на картинку размытие с помощью функции: cv::GaussianBlur(img, BlurPic, cv::Size(Ks, Ks), blur);
- затем накладываем шум с помощью функции cv::Mat addNoise(const cv::Mat& orig_im, double noise_sigm). Полученная картинка будет подвережена обработке:
+Далее накладываем на картинку размытие с помощью функции: cv::GaussianBlur(img, BlurPic, cv::Size(Ks, Ks), blur);
+Затем накладываем шум с помощью функции cv::Mat addNoise(const cv::Mat& orig_im, double noise_sigm). Полученная картинка будет подвережена обработке:
 
  ![FinalyPic](/prj.lab/lab04/ReallyPic.png)
  
@@ -34,9 +34,22 @@
 
 ![BinaryPic](/prj.lab/lab04/binaryPic.png)
 
+Оконная бинаризация проводится следующим методом:
+
+![BinaryWinPic](/prj.lab/lab04/binaryWindow.png)
+
+Далее были применены методы детектции Хафф на бинаризованные картинки, получили следующие результаты:
 
 Порог бинаризации 128: TP: 59, FP: 4, FN: 41
 
+![Det128Pic](/prj.lab/lab04/Bin128.png)
+
 Порог бинаризации 162: TP: 51, FP: 0, FN: 49
- 	
-Также в лабораторной были использованы методы Лапласиана и Гаусяна для нахождения окружностей:
+
+ ![Det162Pic](/prj.lab/lab04/Bin162.png)
+
+Для детектирования оконной бинаризации был использован тот же метод:
+
+TP: 51, FP: 0, FN: 49
+
+![DetWinPic](/prj.lab/lab04/DetectionWindow.png)
