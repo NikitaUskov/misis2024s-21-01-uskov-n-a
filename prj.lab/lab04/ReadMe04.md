@@ -28,13 +28,13 @@
 
 Далее проводим бинаризацию картинки 2 методами, общая и оконная:
 
-Для опредления "оптимального" порога бинаризации был сделан ползунок: void onTrackbar(int, void*). Оптимальным порогом бинаризации было выбрано значение: 
+Для опредления "оптимального" порога бинаризации был сделан ползунок: void onTrackbar(int, void*). Оптимальным порогом бинаризации было выбрано значение: 128
 
 Общая бинаризация проводится следующим методом: cv::threshold(src, dst, threshold, 255, cv::THRESH_BINARY)
 
 ![BinaryPic](/prj.lab/lab04/binaryPic.png)
 
-Оконная бинаризация проводится следующим методом:
+Оконная бинаризация проводится следующим методом: cv::adaptiveThreshold(window, binaryWindow, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, blockSize, C);
 
 ![BinaryWinPic](/prj.lab/lab04/binaryWindow.png)
 
@@ -52,4 +52,4 @@
 
 TP: 51, FP: 0, FN: 49
 
-![DetWinPic](/prj.lab/lab04/DetectionWindow.png)
+![DetWindowBin](/prj.lab/lab04/WindowDetection.png)
