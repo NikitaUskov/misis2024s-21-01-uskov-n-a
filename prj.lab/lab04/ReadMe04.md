@@ -9,8 +9,11 @@
 **Отчет 04**
 	 
 Функциональность:
+
 	void binaryThreshold(const cv::Mat& src, cv::Mat& dst, int threshold) – функция для бинаризации изображения посредством трешхолда (ползунка).
+ 
 	void evaluateDetections(const std::vector<cv::Vec3f>& detections, const std::vector<cv::Vec3f>& groundTruths, double iouThreshold) – функция для оценки детекции, подсчитывание следующих параметров: TP (True positive), FP (false positive), FN (false negative). На вход функция принимает вектор найденных кругов, вектор размеченных кругов и значение с трешхолда.
+ 
 	void createGroundTruth(cv::Mat& img, std::vector<cv::Vec3f>& groundTruths) – функция для разметки изображения для будущего оценивания результативности программы.
 
 Результат работы программы: 
