@@ -53,6 +53,6 @@
 
 Для детектирования оконной бинаризации был использован тот же метод:
 
-TP: 51, FP: 0, FN: 49
+TP: 51, FP: 20, FN: 49
 
 ![DetWindowBin](/prj.lab/lab04/WindowDetection.png)
