@@ -15,6 +15,10 @@
  
 	void createGroundTruth(cv::Mat& img, std::vector<cv::Vec3f>& groundTruths) – функция для разметки изображения для будущего оценивания результативности программы.
 
+	cv::HoughCircles(binaryImg, detectedCircles, cv::HOUGH_GRADIENT, 1, binaryImg.rows / 16, param1Value, param2Value, 5, 35); - Детектирование кругов методом Хаффа выполняется в этой функции
+
+ 	void evaluateFROC(const std::vector<std::vector<cv::Vec3f>>& allDetections, const std::vector<cv::Vec3f>& groundTruths, double iouThreshold) - функция для оценки результатов детекции по FROC (Free-response Receiver Operating Characteristic)
+
 Результат работы программы: 
 	Изначальная картинка для детектирования кругов:
  ![Img](/prj.lab/lab04/img.png)
