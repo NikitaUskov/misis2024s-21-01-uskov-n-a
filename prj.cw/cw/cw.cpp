@@ -1,54 +1,48 @@
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 #include <iostream>
 
-static void GammaCorrect(const cv::Mat& invec, double g, cv::Mat& outvec) {
-    cv::Mat invec_float;
-    invec.convertTo(invec_float, CV_32F);  // Преобразование в тип float
-    cv::pow(invec_float / 255.0, g, outvec);
-    outvec *= 255.0;
-    outvec.convertTo(outvec, CV_8UC1);
-}
-
-int main(int argc, char* argv[]) {
-    cv::CommandLineParser parser(argc, argv,
-        "{s|3|width}"
-        "{h|20|height}"
-        "{gamma|2.4|gamma}"
-        "{@img||}"
-    );
-
-    int s = parser.get<int>("s");
-    int h = parser.get<int>("h");
-    double gamma = parser.get<double>("gamma");
-    std::string filename = parser.get<std::string>("@img");
-
-    // Создание изображения с одним каналом (CV_8UC1)
-    cv::Mat orig(h, 255 * s, CV_8UC1, cv::Scalar(255));
-    cv::Mat outvec(h, 255 * s, CV_8UC1, cv::Scalar(255));
-
-    // Градиентная заливка
-    for (int i = 0; i < 255; i++) {
-        cv::Rect rec(i * s, 0, s, h);
-        orig(rec).setTo(i);
+int main() {
+    // Загружаем изображение
+    cv::Mat image = cv::imread("C://Users/79194/OneDrive - НИТУ МИСиС/Рисунки/Рандом фотки/Window.jpg");
+    if (image.empty()) {
+        std::cerr << "Ошибка: Не удалось загрузить изображение." << std::endl;
+        return -1;
     }
 
-    // Гамма-коррекция
-    GammaCorrect(orig, gamma, outvec);
+    // Уменьшаем размер изображения до 800x800 пикселей
+    cv::Size targetSize(800, 800);
+    cv::resize(image, image, targetSize);
 
-    // Горизонтальное объединение изображений
-    cv::Mat result;
-    cv::vconcat(orig, outvec, result);
+    // Преобразуем изображение в оттенки серого
+    cv::Mat gray;
+    cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
 
-    // Отображение изображения
-    if (filename.empty()) {
-        cv::imshow("Result", result);
-        // Ожидание нажатия клавиши
-        cv::waitKey(0);
-        cv::destroyAllWindows();
+    // Применяем размытие для уменьшения шума
+    cv::GaussianBlur(gray, gray, cv::Size(5, 5), 2);
+
+    cv::imshow("Gauss", gray);
+
+    // Применяем метод Canny для нахождения границ
+    cv::Mat edges;
+    cv::Canny(gray, edges, 25, 180);
+
+    cv::imshow("Canny", edges);
+
+    // Находим контуры
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(edges, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+    // Нарисовать прямоугольники вокруг контуров
+    for (const auto& contour : contours) {
+        cv::Rect rect = cv::boundingRect(contour);
+        if (cv::contourArea(contour) > 100) { // Игнорируем маленькие контуры
+            cv::rectangle(image, rect, cv::Scalar(0, 255, 0), 2);
+        }
     }
-    else cv::imwrite(filename, result);
+
+    // Показываем изображение с найденными прямоугольниками
+    cv::imshow("Распознование прямоугольников", image);
+    cv::waitKey(0);
 
     return 0;
 }
