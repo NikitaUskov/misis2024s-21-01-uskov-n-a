@@ -1,0 +1,2 @@
+Были добавлены результаты работы программы для квантиля черного = 0.9 (ранее только 0.1)
+Было добавлено изображения работы функции cv::Mat JoinContrast(cv::Mat& colorImage, std::vector<cv::Mat>& JoinColors_contrhists, double quants)
