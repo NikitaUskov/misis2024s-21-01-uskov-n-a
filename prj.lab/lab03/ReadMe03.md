@@ -46,4 +46,4 @@
 
 Трехканальная картинка с совместной обработкой:
 
-![JoinQuant2](/prj.lab/lab03/FinalColorJoin_q09(2).png)
+![JoinQuant2](/prj.lab/lab03/FinalColorJoin_q09.png)
