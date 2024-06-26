@@ -1,11 +1,11 @@
-**Лабораторная 06 (детекция окружностей)**
+## **Лабораторная 06 (детекция окружностей)**
 1.	реализовать детектор объектов с использованием Преобразование Хафа
 2.	реализовать FROC анализ результатов
 3.	сравнить методы 4 и 6 лабораторных
 
 
 
-**Отчет 06**
+## **Отчет 06**
 	 
 Функциональность:
 
@@ -13,41 +13,93 @@
  
 	void evaluateDetections(const std::vector<cv::Vec3f>& detections, const std::vector<cv::Vec3f>& groundTruths, double iouThreshold) – функция для оценки детекции, подсчитывание следующих параметров: TP (True positive), FP (false positive), FN (false negative). На вход функция принимает вектор найденных кругов, вектор размеченных кругов и значение с трешхолда.
  
-	void createGroundTruth(cv::Mat& img, std::vector<cv::Vec3f>& groundTruths) – функция для разметки изображения для будущего оценивания результативности программы.
+	void createGroundTruth(cv::Mat& img, std::vector<cv::Vec3f>& groundTruths) - Функция для создания изображения и разметки ground truth
 
-	cv::HoughCircles(binaryImg, detectedCircles, cv::HOUGH_GRADIENT, 1, binaryImg.rows / 16, param1Value, param2Value, 5, 35); - Детектирование кругов методом Хаффа выполняется в этой функции
+ 	void drawFROC(const std::vector<std::tuple<double, double>>& frocPoints, cv::Mat& frocImg) - для отрисовки результатов FROC
 
- 	void evaluateFROC(const std::vector<std::vector<cv::Vec3f>>& allDetections, const std::vector<cv::Vec3f>& groundTruths, double iouThreshold) - функция для оценки результатов детекции по FROC (Free-response Receiver Operating Characteristic)
+  	cv::HoughCircles(binaryImg, detectedCircles, cv::HOUGH_GRADIENT, 1, binaryImg.rows / 16, param1Value, param2Value, minRad, maxRad) - Метод Хаффа для детекции
+   
+   	void detectAndEvaluateCircles(const cv::Mat& binaryImg, const cv::Mat& src, const std::vector<cv::Vec3f>& groundTruths, double iouThreshold) - Функция для детекции окружностей и оценка детекций
 
-Результат работы программы: 
-	Изначальная картинка для детектирования кругов (из лабораторной 4):
+### Результат работы программы: 
+	В отчете будут продемонстрированы картинки с разным кол-вом кругов на них: 10, 25, 50, 100, 256. Но сравнение с 4 лабораторной будет только для 100 кругов.
 
- ![FinalyPic](/prj.lab/lab04/ReallyPic.png)
+#### Полный алгоритм
+ Сгенерированная картинка со 100 кругами разных размеров и яркостей, расположенных по возрастанию яркости и размера окружностей:
+
+ ![Orig_100](/prj.lab/lab06/Cir_100/groundTruth.png)
+
+Далее накладываем на картинку размытие с помощью функции: cv::GaussianBlur(img, BlurPic, cv::Size(Ks, Ks), blur);
+Затем накладываем шум с помощью функции cv::Mat addNoise(const cv::Mat& orig_im, double noise_sigm). Полученная картинка будет подвережена обработке:
+
+![Noize_100](/prj.lab/lab06/Cir_100/Noisy_Image.jpg)
  
-Далее необходимо разметить картинку, чтобы потом было с чем сравнивать детектирование:
+Также для бинаризации и настройки параметров метода Хафф в качестве GUI был реализован трек бар, одинаковый для всех картинок:
 
-![BinTrue](/prj.lab/lab06/BinTrue.png)
+![HaffBar](/prj.lab/lab06/HaffBar.png)
 
+Затем после применения и поиска максимального кол-ва найденных кругов получаем бинаризованную картинку:
 
-Далее применяем метод Хафф, функция которого приведена выше:
+![Bin_100](/prj.lab/lab06/Cir_100/binaryImage.png)
 
-![BinDet](/prj.lab/lab06/BinDet.png)
+При такой бинаризованной картинке получаем следующий результат детекции кругов методом Хаффа:
 
-Результат приведен для "оптимальных" параметров. Параметры настраивались с помощью трек-бара:
+![Haff_100](/prj.lab/lab06/Cir_100/detectedCircles.png)
 
-![TrackBar](/prj.lab/lab06/HaffBar.png)
+В рамках настройки параметров и поиска оптимального решения, каждое изменение параметров FP, FN, TP считывался и изменял значения FROC:
 
-Видим, что при минимальном пороговом значении 10, получаем лучший результат.
+График с расположением точек параметров FPPI, Sensivity.
+![FROC_100](/prj.lab/lab06/Cir_100/frocCurve.png)
 
-Также была реализована функция оценки с помощью FROC: И на данных параметрах результат следующий
+Видно, что лучший результат изображен на рисунке с детектированными кругами и имеет параметры FPPI = 0 , Sensivity = 0.89
 
-**FPPI** = 0,2 (FPPI= FN / N, где N - кол-во кругов)
+### 10 окружностей
 
-**Sensitivity** = 0,83 ( Sen = TP / (TP + FN) )
+Картинка после детекции:
 
+![Detected_10](/prj.lab/lab06/Cir_10/detectedCircles.png)
 
-Если мы будем сравнивать с методом 4 лабораторной, то получим следующие результаты для Лаб04: 
+Диаграмма FROC результатов (FPPI = 0, Sensivity = 1):
 
-FPPI = 0,04 ; Sen = 0,59  -  Для общей бинаризации
+![FROC_10](/prj.lab/lab06/Cir_10/frocCurve.png)
 
-FPPI = 0,2 ; Sen = 0,69   -  Для оконной бинаризации.
+### 25 окружностей
+
+Картинка после детекции:
+
+![Detected_25](/prj.lab/lab06/Cir_25/detectedCircles.png)
+
+Диаграмма FROC результатов (FPPI = 0, Sensivity = 1):
+
+![FROC_25](/prj.lab/lab06/Cir_25/frocCurve.png)
+
+## 50 окружностей
+
+Картинка после детекции:
+
+![Detected_50](/prj.lab/lab06/Cir_50/detectedCircles.png)
+
+Диаграмма FROC результатов (FPPI = 0,02, Sensivity = 0,92):
+
+![FROC_50](/prj.lab/lab06/Cir_50/frocCurve.png)
+
+### 256 окружностей
+
+Картинка после детекции:
+
+![Detected_256](/prj.lab/lab06/Cir_256/detectedCircles.png)
+
+Диаграмма FROC результатов (FPPI = -0.1, Sensivity = 0.76):
+
+![FROC_256](/prj.lab/lab06/Cir_256/frocCurve.png)
+
+В данном условии FPPI получился отрицательным из-за того, что окружности, детектирующие круги были больше и могли "захватить" несколько кругов, что приводило к сбиванию параметров FN, FP.
+
+## Сравнение с lab04
+
+Сравнение методов и результатов будет проводиться только на картинке со 100 кругами, т.к. с меньшим количеством Хафф метод показал максимальные результаты, а с большим сбой по некоторым параметрам.
+
+С помощью Хафф метода были получены следующие результаты: FPPI = 0, Sensivity = 0.89.
+При помощи методов 4 лаборатной были получены следующие результаты: TP = 74, FP = 0, FN = 26, => FPPI = 0, Sensivity = 0.74 
+
+Можно сделать вывод, что метод Хаффа работает лучше, чем метод реализованный в lab04
