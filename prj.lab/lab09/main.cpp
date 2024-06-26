@@ -3,6 +3,22 @@
 #include <iostream>
 #include <vector>
 
+// Функция для линейного RGB преобразования
+cv::Mat linearizeRGB(const cv::Mat& src) {
+    cv::Mat linRGB;
+    src.convertTo(linRGB, CV_32F, 1.0 / 255.0);
+
+    cv::Mat linRGBChannels[3];
+    cv::split(linRGB, linRGBChannels);
+
+    for (int i = 0; i < 3; ++i) {
+        cv::pow(linRGBChannels[i], 1.9, linRGBChannels[i]); // Gamma correction with gamma=2.2
+    }
+
+    cv::merge(linRGBChannels, 3, linRGB);
+    return linRGB;
+}
+
 // Функция Gray World для выравнивания баланса белого
 cv::Mat grayWorld(const cv::Mat& src) {
     if (src.empty()) {
@@ -10,8 +26,11 @@ cv::Mat grayWorld(const cv::Mat& src) {
         return cv::Mat();
     }
 
+    cv::Mat linRGB = linearizeRGB(src);
+    cv::imwrite("linRGB_grayWorld.png", linRGB); // Сохраняем промежуточное изображение
+
     std::vector<cv::Mat> channels;
-    cv::split(src, channels);
+    cv::split(linRGB, channels);
 
     double avgB = cv::mean(channels[0])[0];
     double avgG = cv::mean(channels[1])[0];
@@ -26,6 +45,9 @@ cv::Mat grayWorld(const cv::Mat& src) {
     cv::Mat result;
     cv::merge(channels, result);
 
+    cv::pow(result, 1.0 / 2.2, result); // Reverse gamma correction
+
+    result.convertTo(result, CV_8U, 255.0);
     return result;
 }
 
@@ -36,8 +58,15 @@ cv::Mat autoContrast(const cv::Mat& src) {
         return cv::Mat();
     }
 
+    cv::Mat linRGB = linearizeRGB(src);
+    cv::imwrite("linRGB_autoContrast.png", linRGB); // Сохраняем промежуточное изображение
+
     cv::Mat result;
-    cv::normalize(src, result, 0, 255, cv::NORM_MINMAX);
+    cv::normalize(linRGB, result, 0, 1, cv::NORM_MINMAX);
+
+    cv::pow(result, 1.0 / 2.2, result); // Reverse gamma correction
+
+    result.convertTo(result, CV_8U, 255.0);
     return result;
 }
 
@@ -90,23 +119,51 @@ cv::Mat computeSSIM(const cv::Mat& img1, const cv::Mat& img2, double& ssim_value
     return ssim_map;
 }
 
-// Функция для создания изображения с результатами SSIM
-cv::Mat createResultImage(double ssimGrayWorld, double ssimAutoContrast) {
-    cv::Mat resultImage = cv::Mat::zeros(200, 500, CV_8UC3);
-    cv::putText(resultImage, "SSIM Results", cv::Point(20, 30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 2);
-    cv::putText(resultImage, "Original vs Gray World: " + std::to_string(ssimGrayWorld), cv::Point(20, 80), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
-    cv::putText(resultImage, "Original vs Auto Contrast: " + std::to_string(ssimAutoContrast), cv::Point(20, 130), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+// Функция для вычисления PSNR
+double computePSNR(const cv::Mat& img1, const cv::Mat& img2) {
+    cv::Mat s1;
+    cv::absdiff(img1, img2, s1); // |img1 - img2|
+    s1.convertTo(s1, CV_32F);    // разница должна быть в формате float
+    s1 = s1.mul(s1);             // |img1 - img2|^2
+
+    cv::Scalar s = cv::sum(s1);  // сумма всех элементов
+
+    double sse = s.val[0] + s.val[1] + s.val[2]; // сумма квадратов ошибок
+
+    if (sse == 0) {
+        return 0; // изображения идентичны
+    }
+    else {
+        double mse = sse / (double)(img1.channels() * img1.total());
+        double psnr = 10.0 * log10((255 * 255) / mse);
+        return psnr;
+    }
+}
+
+// Функция для создания изображения с результатами SSIM и PSNR
+cv::Mat createResultImage(double ssimGrayWorld, double ssimAutoContrast, double psnrGrayWorld, double psnrAutoContrast) {
+    cv::Mat resultImage = cv::Mat::zeros(300, 600, CV_8UC3);
+    cv::putText(resultImage, "Quality Metrics", cv::Point(20, 30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 2);
+    cv::putText(resultImage, "Original vs Gray World:", cv::Point(20, 80), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+    cv::putText(resultImage, "SSIM: " + std::to_string(ssimGrayWorld), cv::Point(20, 110), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+    cv::putText(resultImage, "PSNR: " + std::to_string(psnrGrayWorld), cv::Point(20, 140), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+
+    cv::putText(resultImage, "Original vs Auto Contrast:", cv::Point(20, 190), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+    cv::putText(resultImage, "SSIM: " + std::to_string(ssimAutoContrast), cv::Point(20, 220), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+    cv::putText(resultImage, "PSNR: " + std::to_string(psnrAutoContrast), cv::Point(20, 250), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 
     return resultImage;
 }
 
 int main() {
-    std::string input = "C:/Users/79194/OneDrive - НИТУ МИСиС/Рисунки/Рандом фотки/Собака.jpg";
-    std::string outputGrayWorld = "C:/Users/79194/OneDrive - НИТУ МИСиС/Рисунки/Рандом фотки/Собака_grayworld.jpg";
-    std::string outputAutoContrast = "C:/Users/79194/OneDrive - НИТУ МИСиС/Рисунки/Рандом фотки/Собака_autocontrast.jpg";
+    std::string input = "C://opencv/misis2024s-21-01-uskov-n-a/prj.lab/lab09/Leaves/Листья.jpg";
 
     // Загружаем изображение
     cv::Mat img = cv::imread(input);
+    if (img.empty()) {
+        std::cerr << "Error: Unable to load input image!" << std::endl;
+        return -1;
+    }
 
     cv::resize(img, img, cv::Size(500, 500));
 
@@ -114,14 +171,13 @@ int main() {
     cv::Mat resultGrayWorld = grayWorld(img);
 
     // Сохраняем результат Gray World
-    cv::imwrite(outputGrayWorld, resultGrayWorld);
+    cv::imwrite("resultGrayWorld.png", resultGrayWorld);
 
     // Применяем функцию автоконтрастирования
     cv::Mat resultAutoContrast = autoContrast(img);
-    
 
     // Сохраняем результат автоконтрастирования
-    cv::imwrite(outputAutoContrast, resultAutoContrast);
+    cv::imwrite("outputAutoContrast.png", resultAutoContrast);
 
     // Вычисляем SSIM между оригиналом и изображениями
     double ssimGrayWorld;
@@ -130,16 +186,19 @@ int main() {
     cv::Mat ssimMapGrayWorld = computeSSIM(img, resultGrayWorld, ssimGrayWorld);
     cv::Mat ssimMapAutoContrast = computeSSIM(img, resultAutoContrast, ssimAutoContrast);
 
+    // Вычисляем PSNR между оригиналом и изображениями
+    double psnrGrayWorld = computePSNR(img, resultGrayWorld);
+    double psnrAutoContrast = computePSNR(img, resultAutoContrast);
 
-    // Создаем изображение с результатами SSIM
-    cv::Mat resultImage = createResultImage(ssimGrayWorld, ssimAutoContrast);
+    // Создаем изображение с результатами SSIM и PSNR
+    cv::Mat resultImage = createResultImage(ssimGrayWorld, ssimAutoContrast, psnrGrayWorld, psnrAutoContrast);
 
     // Отображаем результат
     cv::imshow("Original", img);
     cv::imshow("Gray World", resultGrayWorld);
     cv::imshow("Auto Contrast", resultAutoContrast);
-    cv::imshow("SSIM Results", resultImage);
-    cv::imwrite("SSIMdiff.png", resultImage);
+    cv::imshow("Quality Metrics", resultImage);
+    cv::imwrite("QualityMetrics.png", resultImage);
 
     cv::waitKey(0);
 
